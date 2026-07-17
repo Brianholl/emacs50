@@ -157,6 +157,9 @@ cat > "$EMACS50_DIR/init.el" << 'EMACS50_INIT'
   (setq ring-bell-function 'ignore)        ; sin sonidos
   ;; Sin popup de warnings de la compilación nativa (ruido de 1ª ejecución)
   (setq native-comp-async-report-warnings-errors 'silent)
+  ;; Siempre minibuffer, nunca diálogos gráficos del sistema
+  (setq use-dialog-box nil
+        use-file-dialog nil)
   ;; Mensaje del buffer *scratch* — ASCII art de emacs50
   (setq initial-scratch-message "\
 ;;
@@ -168,15 +171,15 @@ cat > "$EMACS50_DIR/init.el" << 'EMACS50_INIT'
 ;; ╚══════╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝╚══════╝╚══════╝ ╚═════╝
 ;;
 ;;   CS50x + ESP32  ·  F4 terminal · F5 compila/corre · F6 flashea
-;;   F12 def · Shift-F12 refs · M-x gdb · 1ª vez: M-x dap-cpptools-setup
+;;   F9 árbol · F12 def · M-x gdb · 1ª vez: M-x dap-cpptools-setup
 \n")
   (setq-default indent-tabs-mode nil
                 tab-width 4
                 c-basic-offset 4)
   (column-number-mode 1)
   (global-auto-revert-mode 1)              ; recargar archivos cambiados fuera
-  ;; Números de línea relativos al costado
-  (setq display-line-numbers-type 'relative)
+  ;; Números de línea absolutos, como VS Code
+  (setq display-line-numbers-type t)
   (global-display-line-numbers-mode 1)
   ;; Fuente (usa la primera disponible)
   (require 'cl-lib)
@@ -186,10 +189,13 @@ cat > "$EMACS50_DIR/init.el" << 'EMACS50_INIT'
         (set-face-attribute 'default nil :font f :height 140)
         (cl-return)))))
 
-;; Tema dark
-(use-package doom-themes
+;; Tema: GitHub Dark de VS Code, con fondo negro puro como el code de CS50
+(use-package github-dark-vscode-theme
   :config
-  (load-theme 'doom-one t))
+  (load-theme 'github-dark-vscode t)
+  (dolist (face '(default fringe line-number line-number-current-line))
+    (when (facep face)
+      (set-face-attribute face nil :background "#000000"))))
 
 ;; ─────────────────────────────────────────────────────────────
 ;; 3. Autocompletado
@@ -279,6 +285,34 @@ cat > "$EMACS50_DIR/init.el" << 'EMACS50_INIT'
       gdb-show-main t)
 
 ;; ─────────────────────────────────────────────────────────────
+;; 6b. Look "como code": pestañas + árbol de archivos (F9)
+;; ─────────────────────────────────────────────────────────────
+;; Pestañas de buffers arriba de cada ventana, como las del editor de VS Code
+(global-tab-line-mode 1)
+;; sin pestañas en las ventanas especiales
+(dolist (hook '(eat-mode-hook compilation-mode-hook treemacs-mode-hook))
+  (add-hook hook (lambda () (setq-local tab-line-format nil))))
+
+;; Árbol de archivos a la izquierda (treemacs ya viene con dap/lsp)
+(use-package treemacs
+  :commands (treemacs treemacs-add-and-display-current-project-exclusively)
+  :config
+  (setq treemacs-width 30
+        treemacs-no-png-images t)    ; iconos de texto, estilo vs-minimal
+  ;; sin números de línea en el árbol
+  (add-hook 'treemacs-mode-hook (lambda () (display-line-numbers-mode -1))))
+
+(defun emacs50-tree ()
+  "F9: mostrar/ocultar el árbol de archivos del proyecto actual."
+  (interactive)
+  (if (and (fboundp 'treemacs-current-visibility)
+           (eq (treemacs-current-visibility) 'visible))
+      (treemacs)                                        ; visible → ocultar
+    (treemacs-add-and-display-current-project-exclusively)))  ; sin preguntar
+
+(global-set-key (kbd "<f9>") #'emacs50-tree)
+
+;; ─────────────────────────────────────────────────────────────
 ;; 7. Terminal abajo con F4 (como en cs50.dev)
 ;; ─────────────────────────────────────────────────────────────
 (use-package eat
@@ -307,6 +341,16 @@ cat > "$EMACS50_DIR/init.el" << 'EMACS50_INIT'
         (select-window window)))))
 
 (global-set-key (kbd "<f4>") #'emacs50-terminal)
+
+;; Al arrancar en modo gráfico: terminal abajo ya abierta (como cs50.dev)
+;; y, si se abrió una carpeta (emacs50 .), el árbol de archivos a la izquierda.
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (when (display-graphic-p)
+              (save-selected-window (emacs50-terminal))
+              (when (derived-mode-p 'dired-mode)
+                (save-selected-window
+                 (treemacs-add-and-display-current-project-exclusively))))))
 
 ;; ─────────────────────────────────────────────────────────────
 ;; 8. Compilar / correr con F5 (según el proyecto o el archivo)

@@ -16,7 +16,10 @@
 
 Un Emacs **mínimo para todo el curso [CS50x](https://cs50.harvard.edu/x/)**
 — C, Python (+Flask), SQL, HTML/CSS/JS — **más ESP32** (y C++/Rust/Go).
-Tema oscuro, `lsp-mode`, debug con `gdb`/`dap`, terminal integrada.
+`lsp-mode`, debug con `gdb`/`dap`, y el **look del VS Code de CS50**:
+tema GitHub Dark (VS Code) con fondo negro puro, pestañas de editor
+(tab-line), árbol de archivos a la izquierda (treemacs) y terminal abajo
+— árbol y terminal se abren solos al arrancar (`emacs50 .`).
 Sin org-mode, sin IA, sin adornos. Hermano de
 [cs50-vscode](../cs50-vscode/) y [cs50-scratch](../cs50-scratch/).
 
@@ -55,6 +58,7 @@ emacs50 hello.c    # abre directamente un archivo
 | `F4`            | **Terminal** abajo (mostrar/ocultar, como cs50.dev) |
 | `F5`            | Guardar y **compilar/correr**                     |
 | `F6`            | **Flashear ESP32** (`.emacs50-flash` / detección) |
+| `F9`            | **Árbol de archivos** del proyecto (mostrar/ocultar) |
 | `F12`           | Ir a la **definición** (LSP)                      |
 | `Shift-F12`     | Buscar **referencias** (LSP)                      |
 | `C-c l`         | Prefijo de comandos LSP                           |
