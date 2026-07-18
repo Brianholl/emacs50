@@ -81,8 +81,12 @@ ok "Dependencias CS50x presentes."
 
 # Herramientas oficiales de CS50 (autocorrección y entrega de ejercicios,
 # vía pipx — sin sudo): check50 corrige, style50 revisa estilo, submit50 entrega.
+# OJO: check50 3.4 se rompe con Python 3.14 (multiprocessing ya no hereda
+# globals → "TypeError: NoneType / str" al correr checks). pipx baja un
+# Python 3.13 propio para estos venvs (--fetch-python=missing).
 for t in check50 style50 submit50; do
-    have "$t" || { msg "Instalando $t con pipx…"; pipx install "$t" >/dev/null; }
+    have "$t" || { msg "Instalando $t con pipx (Python 3.13)…"; \
+                   pipx install --python 3.13 --fetch-python=missing "$t" >/dev/null; }
 done
 ok "check50, style50 y submit50 listos."
 
