@@ -17,7 +17,7 @@ tinygo info esp32
 ## Compilar y flashear
 
 ```bash
-tinygo flash -target=esp32 -monitor .   # ← lo mismo que F6 en emacs50
+tinygo flash -target=esp32-coreboard-v2 -monitor .   # ← lo mismo que F6 en emacs50
 ```
 
 Si no autodetecta el puerto: `-port=/dev/ttyUSB0` (el ZY suele ser `ttyUSB0`).

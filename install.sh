@@ -471,7 +471,7 @@ MicroPython (main.py), Rust (Cargo.toml) o TinyGo (go.mod)."
       (setq cmd "cargo run --release"))
      ;; 4) TinyGo
      ((file-exists-p (expand-file-name "go.mod" root))
-      (setq cmd "tinygo flash -target=esp32 -monitor .")))
+      (setq cmd "tinygo flash -target=esp32-coreboard-v2 -monitor .")))
     (if (and cmd (not (string-empty-p cmd)))
         (let ((default-directory root))
           ;; modo comint (interactivo): espflash pregunta por el puerto (y/n)

@@ -22,7 +22,7 @@ cd c-idf-hello   && get_idf && idf.py set-target esp32s3 && idf.py flash monitor
 # Rust
 cd rust-hello    && get_esp && cargo run --release
 # Go (solo ESP32 clásico)
-cd tinygo-hello  && tinygo flash -target=esp32 -monitor .
+cd tinygo-hello  && tinygo flash -target=esp32-coreboard-v2 -monitor .
 ```
 
 3. **Para arrancar un proyecto real:** copiá la carpeta y renombrá el proyecto

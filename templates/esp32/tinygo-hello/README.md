@@ -3,7 +3,7 @@
 Smoke test para el **ESP32 clásico (ZY)**. **No corre en el S3.**
 
 ```bash
-tinygo flash -target=esp32 -monitor .    # F6 en emacs50
+tinygo flash -target=esp32-coreboard-v2 -monitor .    # F6 en emacs50
 ```
 
 **Anda si** en el monitor ves:

@@ -1,6 +1,6 @@
 // Blink con TinyGo en el ESP32 clásico (target esp32).
 //
-// OJO: TinyGo soporta el ESP32 clásico (-target=esp32) y el C3
+// OJO: TinyGo soporta el ESP32 clásico (-target=esp32-coreboard-v2) y el C3
 // (-target=esp32-c3), pero NO el ESP32-S3. En tus placas S3-N16R8 usá
 // C (ESP-IDF) o Rust; este ejemplo es para el ZY-ESP32.
 //

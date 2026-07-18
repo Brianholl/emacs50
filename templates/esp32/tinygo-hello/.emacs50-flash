@@ -1,1 +1,1 @@
-tinygo flash -target=esp32 -monitor .
+tinygo flash -target=esp32-coreboard-v2 -monitor .

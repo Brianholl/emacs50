@@ -2,7 +2,7 @@
 // Imprime por serie y parpadea el LED: si ves los "tick N" en el monitor,
 // toda la cadena anda.
 //
-// OJO: TinyGo soporta el ESP32 clásico (-target=esp32), NO el ESP32-S3.
+// OJO: TinyGo soporta el ESP32 clásico (-target=esp32-coreboard-v2), NO el ESP32-S3.
 // El compilador `go` estándar no sirve: compilá SOLO con tinygo.
 package main
 

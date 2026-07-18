@@ -136,7 +136,7 @@ cargo run --release           # compila → flashea → monitor (vía espflash)
 
 ```bash
 cd examples/esp32/tinygo-blink
-tinygo flash -target=esp32 -monitor .
+tinygo flash -target=esp32-coreboard-v2 -monitor .
 ```
 
 - Puerto manual: `-port=/dev/ttyUSB0`.
@@ -211,7 +211,7 @@ get_idf; idf.py set-target esp32s3; idf.py build; idf.py flash monitor
 get_esp; cargo run --release            # espflash flashea + monitor
 
 # Go (solo ESP32 clásico)
-tinygo flash -target=esp32 -monitor .
+tinygo flash -target=esp32-coreboard-v2 -monitor .
 
 # Ver puerto
 ls /dev/ttyUSB* /dev/ttyACM*
