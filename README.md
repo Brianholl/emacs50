@@ -96,8 +96,14 @@ primera vez: `M-x dap-cpptools-setup` (C/C++/Rust) — Go usa delve.
 `F5` compila en el **host**; `F6` hace build+flash al ESP32. Orden de
 decisión: archivo **`.emacs50-flash`** del proyecto con el comando exacto
 (acepta también el viejo `.crustgo-flash`) → detección de ESP-IDF
-(`sdkconfig`) / Rust (`Cargo.toml` con espflash como runner) / TinyGo
-(`go.mod`).
+(`sdkconfig`) / MicroPython (`main.py`) / Rust (`Cargo.toml` con espflash
+como runner) / TinyGo (`go.mod`).
+
+F6 corre en un buffer **interactivo** (espflash pregunta por el puerto la
+primera vez; el monitor acepta teclas) y **carga los entornos solo**: si
+`idf.py` no está en el PATH agrega `source ~/esp/esp-idf/export.sh`, y
+para cargo/espflash agrega `source ~/export-esp.sh` — no hace falta abrir
+emacs50 desde una terminal con `get_idf`/`get_esp`.
 
 - **C / C++** → ESP-IDF (`get_idf` carga el entorno; `idf.py`). C++ va
   nativo: `main.cpp` con `extern "C" void app_main()` — ver

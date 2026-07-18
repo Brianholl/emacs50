@@ -322,7 +322,10 @@ cat > "$EMACS50_DIR/init.el" << 'EMACS50_INIT'
   :init
   ;; bash siempre, como en cs50.dev (y evita asistentes de zsh/fish del
   ;; sistema). eat usa explicit-shell-file-name; eat-shell no existe en 0.9.x.
-  (setq explicit-shell-file-name "/bin/bash")
+  ;; shell-file-name además fija bash para M-x compile (F5/F6): los `source`
+  ;; de los entornos ESP32 son sintaxis bash, no fish.
+  (setq explicit-shell-file-name "/bin/bash"
+        shell-file-name "/bin/bash")
   :config
   (setq eat-kill-buffer-on-exit t)
   ;; sin números de línea dentro de la terminal
@@ -472,6 +475,17 @@ MicroPython (main.py), Rust (Cargo.toml) o TinyGo (go.mod)."
      ;; 4) TinyGo
      ((file-exists-p (expand-file-name "go.mod" root))
       (setq cmd "tinygo flash -target=esp32-coreboard-v2 -monitor .")))
+    ;; Cargar el entorno de la cadena automáticamente si hace falta: así F6
+    ;; funciona aunque emacs50 se abra desde el menú (sin get_idf/get_esp).
+    (when cmd
+      (cond
+       ((and (string-match-p "idf\\.py" cmd)
+             (not (executable-find "idf.py"))
+             (file-exists-p (expand-file-name "~/esp/esp-idf/export.sh")))
+        (setq cmd (concat "source ~/esp/esp-idf/export.sh >/dev/null 2>&1 && " cmd)))
+       ((and (string-match-p "cargo\\|espflash" cmd)
+             (file-exists-p (expand-file-name "~/export-esp.sh")))
+        (setq cmd (concat "source ~/export-esp.sh >/dev/null 2>&1 && " cmd)))))
     (if (and cmd (not (string-empty-p cmd)))
         (let ((default-directory root))
           ;; modo comint (interactivo): espflash pregunta por el puerto (y/n)
@@ -496,6 +510,10 @@ ok "Configuración escrita en $EMACS50_DIR"
 mkdir -p "$BIN_DIR"
 cat > "$BIN_DIR/emacs50" << LAUNCHER
 #!/bin/sh
+# PATH completo aunque se lance desde el menú: pipx (~/.local/bin: mpremote,
+# esptool) y cargo (~/.cargo/bin: espflash, espup).
+PATH="\$HOME/.local/bin:\$HOME/.cargo/bin:\$PATH"
+export PATH
 exec emacs --init-directory "$EMACS50_DIR/" "\$@"
 LAUNCHER
 chmod +x "$BIN_DIR/emacs50"
@@ -507,7 +525,8 @@ if [ -d "$HOME/.config/fish" ] || have fish; then
     mkdir -p "$HOME/.config/fish/functions"
     cat > "$HOME/.config/fish/functions/emacs50.fish" << FISH
 function emacs50 --description 'emacs50 — Emacs para CS50x + ESP32'
-    emacs --init-directory $EMACS50_DIR/ \$argv
+    # vía el lanzador para heredar el PATH de pipx/cargo (mpremote, espflash…)
+    $BIN_DIR/emacs50 \$argv
 end
 FISH
 fi
@@ -662,7 +681,7 @@ EOF
             for h in paru yay; do have "$h" && AUR="$h" && break; done
             if [ -n "$AUR" ]; then
                 msg "[Go] Instalando tinygo-bin desde AUR con $AUR"
-                "$AUR" -S --needed tinygo-bin
+                "$AUR" -S --needed --noconfirm tinygo-bin
             else
                 echo "!!  TinyGo está en AUR y no encontré paru/yay:  paru -S tinygo-bin"
             fi
