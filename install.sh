@@ -79,6 +79,13 @@ pacman_needed emacs gcc gdb make valgrind clang python python-pip \
               python-pipx python-flask pyright sqlite git
 ok "Dependencias CS50x presentes."
 
+# Herramientas oficiales de CS50 (autocorrección y entrega de ejercicios,
+# vía pipx — sin sudo): check50 corrige, style50 revisa estilo, submit50 entrega.
+for t in check50 style50 submit50; do
+    have "$t" || { msg "Instalando $t con pipx…"; pipx install "$t" >/dev/null; }
+done
+ok "check50, style50 y submit50 listos."
+
 # ── 2. Rust y Go (opcional, --sistemas) ───────────────────────
 if [ "$WITH_SISTEMAS" -eq 1 ]; then
     pacman_needed go gopls
@@ -707,7 +714,7 @@ fi
 echo
 msg "Verificación:"
 check() { if have "$1"; then printf '    ✓ %s\n' "$1"; else printf '    ✗ %s  (FALTA)\n' "$1"; fi; }
-for b in emacs gcc gdb make valgrind clangd python pyright sqlite3 flask; do check "$b"; done
+for b in emacs gcc gdb make valgrind clangd python pyright sqlite3 flask check50 style50 submit50; do check "$b"; done
 if [ "$WITH_SISTEMAS" -eq 1 ]; then
     for b in rustc cargo rust-analyzer go gopls dlv; do check "$b"; done
 fi
@@ -721,5 +728,4 @@ fi
 echo
 ok "Listo. Abrí una terminal nueva y ejecutá:  emacs50"
 echo "   F4 terminal · F5 compila/corre · F6 flashea ESP32 · F12 definición"
-echo "   Extras de CS50 (opcionales):  pipx install check50 style50 submit50"
-echo "   (la librería 'cs50' de Python va en el venv de cada proyecto)"
+echo "   check50/style50/submit50 ya instalados; la librería 'cs50' de Python va en el venv de cada proyecto"
