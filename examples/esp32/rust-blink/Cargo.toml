@@ -1,16 +1,27 @@
 [package]
-name = "rust-blink"
-version = "0.1.0"
-edition = "2021"
+name         = "rust-blink"
+version      = "0.1.0"
+edition      = "2024"
+rust-version = "1.88"
 
-# Para el ESP32 clásico (ZY): cambiá la feature "esp32s3" por "esp32" en las
-# tres dependencias (y el target en .cargo/config.toml).
+# Tren esp-hal 1.0 (el mismo que rust-sos-s3): esp-bootloader-esp-idf 0.4.x
+# acompaña a esp-hal ~1.0 — NO mezclar con 0.5.x (tren 1.1). El porqué está en
+# el comentario grande de rust-sos-s3/Cargo.toml.
+#
+# Para el ESP32 clásico: cambiá la feature "esp32s3" por "esp32" en todas las
+# dependencias (y el target/runner en .cargo/config.toml).
 [dependencies]
-esp-hal       = { version = "0.23.1", features = ["esp32s3"] }
-esp-backtrace = { version = "0.15.0", features = ["esp32s3", "panic-handler", "println"] }
-esp-println   = { version = "0.13.0", features = ["esp32s3", "log"] }
+esp-hal                = { version = "~1.0.0", features = ["esp32s3", "log-04", "unstable"] }
+esp-bootloader-esp-idf = { version = "0.4.0", features = ["esp32s3", "log-04"] }
+esp-backtrace          = { version = "0.19.0", features = ["esp32s3", "panic-handler", "println"] }
+esp-println            = { version = "0.17.0", default-features = false, features = ["esp32s3", "log-04", "jtag-serial"] }
+log                    = "0.4.27"
+
+[profile.dev]
+opt-level = "s"
 
 [profile.release]
-opt-level = "s"
-lto = "fat"
 codegen-units = 1
+debug         = 2
+lto           = "fat"
+opt-level     = "s"

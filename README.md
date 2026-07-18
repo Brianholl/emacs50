@@ -99,10 +99,18 @@ decisión: archivo **`.emacs50-flash`** del proyecto con el comando exacto
 (`sdkconfig`) / Rust (`Cargo.toml` con espflash como runner) / TinyGo
 (`go.mod`).
 
-- **C / C++** → ESP-IDF (`get_idf` carga el entorno; `idf.py`)
+- **C / C++** → ESP-IDF (`get_idf` carga el entorno; `idf.py`). C++ va
+  nativo: `main.cpp` con `extern "C" void app_main()` — ver
+  `templates/esp32/cpp-idf-hello/`.
 - **Rust** → espup + espflash (`get_esp` carga el entorno — necesario
-  incluso en no_std: trae el linker Xtensa)
+  incluso en no_std: trae el linker Xtensa). Ejemplos en el tren
+  **esp-hal 1.0**.
 - **Go** → TinyGo (solo ESP32 clásico, no el S3)
+- **MicroPython** → esptool (firmware) + mpremote (F6 corre `main.py` en
+  la placa) — ver `templates/esp32/micropython-hello/`.
+
+Componentes de `--esp32`: `c`, `rust`, `go`, `micropython` (por defecto,
+todos).
 
 Material heredado de crustgo, ya renombrado:
 

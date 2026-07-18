@@ -1,15 +1,18 @@
-# Target por defecto: ESP32-S3. Para el ESP32 clásico (ZY) cambiá las dos
-# apariciones de 'esp32s3' por 'esp32' (y la feature en Cargo.toml).
+# Target por defecto: ESP32-S3. Para el ESP32 clásico cambiá las apariciones
+# de 'esp32s3' por 'esp32' acá y en Cargo.toml.
 [target.xtensa-esp32s3-none-elf]
-# espflash hace el flash + monitor; por eso `cargo run` (= F5/F6) flashea.
-runner = "espflash flash --monitor"
+# espflash hace flash + monitor → `cargo run` (= F6 en emacs50) flashea.
+runner = "espflash flash --monitor --chip esp32s3"
+
+[env]
+ESP_LOG = "info"
 
 [build]
 target = "xtensa-esp32s3-none-elf"
+# IMPORTANTE (esp-hal 1.0): NO pongas rustflags con -Tlinkall.x acá. El build.rs
+# ya inyecta linkall.x. Duplicarlo desordena la imagen y la placa no arranca.
+rustflags = []
 
 [unstable]
-# Xtensa no trae core/alloc precompilados → se compilan al vuelo.
-build-std = ["core", "alloc"]
-
-[env]
-ESP_LOG = "INFO"
+# Xtensa no trae `core` precompilado → se compila al vuelo.
+build-std = ["core"]

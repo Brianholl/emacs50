@@ -1,13 +1,13 @@
-# Target por defecto: ESP32-S3. Para el ESP32 clásico (ZY) cambiá 'esp32s3'
-# por 'esp32' acá (2 veces) y la feature en Cargo.toml.
 [target.xtensa-esp32s3-none-elf]
-runner = "espflash flash --monitor"
+runner = "espflash flash --monitor --chip esp32s3"
+
+[env]
+ESP_LOG = "info"
 
 [build]
 target = "xtensa-esp32s3-none-elf"
+# esp-hal 1.0: linkall.x lo inyecta build.rs — no duplicar acá.
+rustflags = []
 
 [unstable]
-build-std = ["core", "alloc"]
-
-[env]
-ESP_LOG = "INFO"
+build-std = ["core"]

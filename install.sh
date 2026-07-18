@@ -16,9 +16,11 @@
 # Uso:
 #   ./install.sh                        instalación CS50x
 #   ./install.sh --sistemas             + Rust y Go (con LSP y delve)
-#   ./install.sh --esp32                + toolchains ESP32: C (ESP-IDF),
+#   ./install.sh --esp32                + toolchains ESP32: C/C++ (ESP-IDF),
 #                                         Rust (espup/espflash), Go (TinyGo)
+#                                         y MicroPython (esptool/mpremote)
 #   ./install.sh --esp32=c,rust         solo esas cadenas ESP32
+#                                       (c | rust | go | micropython)
 #   ./install.sh --sistemas --esp32     todo
 #
 # Variables (para --esp32):
@@ -34,7 +36,7 @@ BIN_DIR="$HOME/.local/bin"
 
 WITH_SISTEMAS=0
 WITH_ESP32=0
-ESP32_PARTS="c,rust,go"
+ESP32_PARTS="c,rust,go,micropython"
 for arg in "$@"; do
     case "$arg" in
         --sistemas) WITH_SISTEMAS=1 ;;
@@ -435,13 +437,14 @@ HTML → abrir en el navegador."
   "F6: build + flash a un ESP32.
 Usa el comando del archivo `.emacs50-flash' del proyecto si existe (también
 acepta el viejo `.crustgo-flash'); si no, detecta ESP-IDF (sdkconfig),
-Rust (Cargo.toml) o TinyGo (go.mod)."
+MicroPython (main.py), Rust (Cargo.toml) o TinyGo (go.mod)."
   (interactive)
   (when buffer-file-name (save-buffer))
   (let* ((root (or (locate-dominating-file default-directory ".emacs50-flash")
                    (locate-dominating-file default-directory ".crustgo-flash")
                    (locate-dominating-file default-directory "sdkconfig")
                    (locate-dominating-file default-directory "sdkconfig.defaults")
+                   (locate-dominating-file default-directory "main.py")
                    (locate-dominating-file default-directory "Cargo.toml")
                    (locate-dominating-file default-directory "go.mod")
                    default-directory))
@@ -460,6 +463,9 @@ Rust (Cargo.toml) o TinyGo (go.mod)."
      ((or (file-exists-p (expand-file-name "sdkconfig" root))
           (file-exists-p (expand-file-name "sdkconfig.defaults" root)))
       (setq cmd "idf.py flash monitor"))
+     ;; 2b) MicroPython (main.py en la raíz; el firmware ya debe estar en la placa)
+     ((file-exists-p (expand-file-name "main.py" root))
+      (setq cmd "mpremote run main.py"))
      ;; 3) Rust embebido (espflash como runner de cargo)
      ((file-exists-p (expand-file-name "Cargo.toml" root))
       (setq cmd "cargo run --release"))
@@ -533,17 +539,18 @@ if [ "$WITH_ESP32" -eq 1 ]; then
     IDF_TARGETS="${IDF_TARGETS:-esp32,esp32s3}"
     ESP_DIR="$HOME/esp"
     IDF_DIR="$ESP_DIR/esp-idf"
-    do_c=0; do_rust=0; do_go=0
+    do_c=0; do_rust=0; do_go=0; do_mpy=0
     IFS=',' read -ra parts <<< "$ESP32_PARTS"
     for a in "${parts[@]}"; do
         case "$a" in
-            c|cpp|c++|idf) do_c=1 ;;
-            rust|rs)       do_rust=1 ;;
-            go|tinygo)     do_go=1 ;;
-            *) fail "componente ESP32 desconocido: $a (usá: c | rust | go)" ;;
+            c|cpp|c++|idf)            do_c=1 ;;
+            rust|rs)                  do_rust=1 ;;
+            go|tinygo)                do_go=1 ;;
+            micropython|mpy|upython)  do_mpy=1 ;;
+            *) fail "componente ESP32 desconocido: $a (usá: c | rust | go | micropython)" ;;
         esac
     done
-    msg "ESP32  (C=$do_c  Rust=$do_rust  Go=$do_go)  IDF_BRANCH=$IDF_BRANCH  IDF_TARGETS=$IDF_TARGETS"
+    msg "ESP32  (C=$do_c  Rust=$do_rust  Go=$do_go  MicroPython=$do_mpy)  IDF_BRANCH=$IDF_BRANCH  IDF_TARGETS=$IDF_TARGETS"
 
     # Prerrequisitos comunes
     ESP_PKGS=(git wget flex bison gperf python cmake ninja ccache dfu-util libusb)
@@ -660,6 +667,19 @@ EOF
         fi
         echo "    ℹ️  Recordá: TinyGo soporta el ESP32 clásico, NO el ESP32-S3."
     fi
+
+    # ── MicroPython — esptool + mpremote (vía pipx, sin sudo) ─
+    if [ "$do_mpy" -eq 1 ]; then
+        msg "[MicroPython] esptool + mpremote (pipx)"
+        have pipx || fail "falta pipx (lo instala la sección 1 de este script)"
+        have esptool  || pipx install esptool  >/dev/null
+        have mpremote || pipx install mpremote >/dev/null
+        echo "    Firmware: bajá el .bin de https://micropython.org/download/ y:"
+        echo "      esptool --chip auto erase_flash"
+        echo "      esptool --chip auto write_flash 0x1000 FIRMWARE.bin   # S3: offset 0x0"
+        echo "    Después: F6 en un proyecto con main.py corre 'mpremote run main.py'."
+        ok "[MicroPython] esptool y mpremote listos (plantilla: templates/esp32/micropython-hello)."
+    fi
 fi
 
 # ── 7. Verificación ───────────────────────────────────────────
@@ -674,6 +694,7 @@ if [ "$WITH_ESP32" -eq 1 ]; then
     [ "$do_c" -eq 1 ] && { [ -f "$IDF_DIR/export.sh" ] && printf '    ✓ ESP-IDF (cargá el entorno con get_idf)\n' || printf '    ✗ ESP-IDF\n'; }
     [ "$do_rust" -eq 1 ] && { check espup; check espflash; }
     [ "$do_go" -eq 1 ] && { check tinygo; check esptool; }
+    [ "$do_mpy" -eq 1 ] && { check esptool; check mpremote; }
 fi
 
 echo

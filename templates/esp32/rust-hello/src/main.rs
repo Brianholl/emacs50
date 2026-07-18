@@ -1,10 +1,10 @@
-//! Plantilla "smoke test" de emacs50 para Rust + esp-hal (ESP32-S3, no_std).
+//! Plantilla "smoke test" de emacs50 para Rust + esp-hal 1.0 (ESP32-S3, no_std).
 //! Imprime por serie con esp-println y parpadea un LED: si ves los "tick N"
 //! en el monitor, toda la cadena (compilar/flashear/serie/GPIO) anda.
 //!
-//! ⚠️ La API de esp-hal cambia entre versiones (esto es para ~0.23). Si no
-//! compila, regenerá con `esp-generate --chip esp32s3 ...` y pegale el glue
-//! (.cargo/config.toml, rust-toolchain.toml, .emacs50-flash).
+//! ⚠️ Si no compila con una esp-hal futura, regenerá con
+//! `esp-generate --chip esp32s3 ...` y pegale el glue de esta carpeta
+//! (.cargo/config.toml, rust-toolchain.toml, build.rs, .emacs50-flash).
 
 #![no_std]
 #![no_main]
@@ -12,27 +12,26 @@
 use esp_backtrace as _;
 use esp_hal::{
     delay::Delay,
-    gpio::{Level, Output},
-    prelude::*,
+    gpio::{Level, Output, OutputConfig},
+    main,
 };
 use esp_println::println;
 
-#[entry]
+esp_bootloader_esp_idf::esp_app_desc!();
+
+#[main]
 fn main() -> ! {
     let peripherals = esp_hal::init(esp_hal::Config::default());
     let delay = Delay::new();
 
-    // LED: GPIO2 en el ESP32 clásico. En el S3 DevKitC el LED es RGB (WS2812)
-    // y un GPIO simple no lo enciende — usá otro pin con un LED común.
-    let mut led = Output::new(peripherals.GPIO2, Level::Low);
+    // GPIO2: LED externo (el on-board del S3 es WS2812 → ver rust-sos-s3)
+    let mut led = Output::new(peripherals.GPIO2, Level::Low, OutputConfig::default());
 
-    println!("Hola desde emacs50! Rust + esp-hal funcionando.");
-
-    let mut n: u32 = 0;
+    let mut tick: u32 = 0;
     loop {
         led.toggle();
-        println!("tick {}", n);
-        n = n.wrapping_add(1);
+        println!("tick {tick} — hola desde Rust/esp-hal en ESP32");
+        tick += 1;
         delay.delay_millis(1000);
     }
 }
