@@ -474,7 +474,9 @@ MicroPython (main.py), Rust (Cargo.toml) o TinyGo (go.mod)."
       (setq cmd "tinygo flash -target=esp32 -monitor .")))
     (if (and cmd (not (string-empty-p cmd)))
         (let ((default-directory root))
-          (compile cmd))
+          ;; modo comint (interactivo): espflash pregunta por el puerto (y/n)
+          ;; y el monitor de idf.py acepta teclas — en el buffer se puede tipear
+          (compile cmd t))
       (message "emacs50: no sé cómo flashear. Creá un .emacs50-flash con el comando."))))
 
 (global-set-key (kbd "<f6>") #'emacs50-esp-flash)
