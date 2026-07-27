@@ -8,7 +8,7 @@
 #
 # Script AUTOCONTENIDO: basta copiar este archivo a cada máquina.
 #   1. Dependencias del curso: gcc/gdb/valgrind, clangd, python+flask,
-#      pyright, sqlite (solo pide sudo si falta algo)
+#      pyright, sqlite, GnuCOBOL (AUR) — solo pide sudo si falta algo
 #   2. La configuración de Emacs en ~/.local/share/emacs50/
 #   3. El lanzador 'emacs50' (~/.local/bin + función fish + menú KDE)
 #   4. Los paquetes de Emacs (elpa)
@@ -65,6 +65,20 @@ pacman_needed() {
     fi
 }
 
+# Helper: instala un paquete de AUR si falta (necesita paru o yay)
+aur_needed() {  # $1=paquete
+    pacman -Q "$1" >/dev/null 2>&1 && return 0
+    local aur=""
+    for h in paru yay; do have "$h" && aur="$h" && break; done
+    if [ -n "$aur" ]; then
+        msg "Instalando desde AUR con $aur: $1  (pide sudo)"
+        "$aur" -S --needed --noconfirm "$1"
+    else
+        echo "!!  $1 está en AUR y no encontré paru/yay:  paru -S $1"
+        return 1
+    fi
+}
+
 # Helper: agrega un alias/línea a bash y zsh si no está
 add_rc_line() {  # $1=patrón-de-búsqueda  $2=línea
     for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
@@ -77,6 +91,10 @@ add_rc_line() {  # $1=patrón-de-búsqueda  $2=línea
 # pyright (LSP) · SQL: sqlite · git para los repos de los alumnos.
 pacman_needed emacs gcc gdb make valgrind clang python python-pip \
               python-pipx python-flask pyright sqlite git
+# COBOL: GnuCOBOL (cobc) vive solo en AUR; compila a C y linkea con el gcc
+# de arriba. F5 corre .cob/.cbl con  cobc -x archivo.cob && ./archivo.
+aur_needed gnucobol && ok "GnuCOBOL presente: $(cobc --version 2>/dev/null | head -1)" \
+    || echo "   (seguí sin COBOL; instalá gnucobol cuando puedas y F5 lo compilará)"
 ok "Dependencias CS50x presentes."
 
 # Herramientas oficiales de CS50 (autocorrección y entrega de ejercicios,
@@ -241,6 +259,11 @@ cat > "$EMACS50_DIR/init.el" << 'EMACS50_INIT'
   ;; gofmt al guardar (Go usa tabs; respetamos su estilo nativo)
   (add-hook 'before-save-hook #'gofmt-before-save nil t))
 
+(use-package cobol-mode
+  ;; .cob/.cbl programas, .cpy copybooks. Formato fijo por defecto (el que
+  ;; compila cobc sin flags); se corre con F5. cobol-mode está en GNU ELPA.
+  :mode ("\\.cob\\'" "\\.cbl\\'" "\\.cpy\\'"))
+
 ;; ─────────────────────────────────────────────────────────────
 ;; 5. LSP — clangd (C/C++) · pyright (Python) · rust-analyzer · gopls
 ;; ─────────────────────────────────────────────────────────────
@@ -377,7 +400,7 @@ cat > "$EMACS50_DIR/init.el" << 'EMACS50_INIT'
   "F5: guarda y compila/corre. Detecta el proyecto (Makefile, Cargo.toml,
 go.mod) y, si no hay, actúa según el archivo: C → gcc, C++ → g++,
 Python → python (app.py → flask run), Rust → rustc, Go → go run,
-HTML → abrir en el navegador."
+COBOL → cobc, HTML → abrir en el navegador."
   (interactive)
   (save-buffer)
   (let* ((file  buffer-file-name)
@@ -429,6 +452,13 @@ HTML → abrir en el navegador."
           (setq dir make cmd "make")
         (setq dir default-directory
               cmd (format "g++ -std=c++17 -Wall -Wextra -g %s -o %s && ./%s"
+                          (shell-quote-argument name) base base))))
+     ;; ── COBOL ───────────────────────────────────────────────
+     ((member ext '("cob" "cbl"))
+      (if make
+          (setq dir make cmd "make")
+        (setq dir default-directory
+              cmd (format "cobc -x %s -o %s && ./%s"
                           (shell-quote-argument name) base base))))
      ;; ── Sin extensión conocida: probar Makefile ─────────────
      (make (setq dir make cmd "make"))
@@ -718,7 +748,7 @@ fi
 echo
 msg "Verificación:"
 check() { if have "$1"; then printf '    ✓ %s\n' "$1"; else printf '    ✗ %s  (FALTA)\n' "$1"; fi; }
-for b in emacs gcc gdb make valgrind clangd python pyright sqlite3 flask check50 style50 submit50; do check "$b"; done
+for b in emacs gcc gdb make valgrind clangd cobc python pyright sqlite3 flask check50 style50 submit50; do check "$b"; done
 if [ "$WITH_SISTEMAS" -eq 1 ]; then
     for b in rustc cargo rust-analyzer go gopls dlv; do check "$b"; done
 fi
