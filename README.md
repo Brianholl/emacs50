@@ -67,6 +67,10 @@ emacs50 hello.c    # abre directamente un archivo
 
 ### Qué hace F5
 
+El buffer `*compilation*` es **interactivo** (comint): lo que tipeás ahí se
+manda al proceso, así que `get_string`/`scanf` en C, `input()` en Python y
+`Scanner` en Java reciben stdin normalmente.
+
 | Archivo / proyecto           | Corre                                        |
 |------------------------------|----------------------------------------------|
 | `Makefile` (C/C++)           | `make`                                       |

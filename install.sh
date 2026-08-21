@@ -490,7 +490,10 @@ run), Rust → rustc, Go → go run, COBOL → cobc, HTML → abrir en el navega
      (t (message "emacs50: no sé cómo compilar este buffer (%s)" (or name "?"))))
     (when cmd
       (let ((default-directory dir))
-        (compile cmd)))))
+        ;; comint (t): sin esto compilation-mode solo MUESTRA la salida y no
+        ;; manda al proceso lo que tipeás — get_string/scanf/input()/Scanner
+        ;; se quedan esperando un stdin que nunca llega.
+        (compile cmd t)))))
 
 (global-set-key (kbd "<f5>") #'emacs50-compile)
 
