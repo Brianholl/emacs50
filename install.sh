@@ -4,7 +4,7 @@
 #
 # Sucesor unificado de emacs-crisol (C) y emacs-crustgo (C/C++/Rust/Go +
 # ESP32): un solo Emacs mínimo que cubre el curso CS50x completo
-# (C, Python, SQL, HTML/CSS/JS, Flask) más desarrollo ESP32.
+# (C, Java, Python, SQL, HTML/CSS/JS, Flask) más desarrollo ESP32.
 #
 # Script AUTOCONTENIDO: basta copiar este archivo a cada máquina.
 #   1. Dependencias del curso: gcc/gdb/valgrind, clangd, python+flask,
@@ -88,9 +88,11 @@ add_rc_line() {  # $1=patrón-de-búsqueda  $2=línea
 
 # ── 1. Dependencias del curso CS50x ───────────────────────────
 # C: gcc/gdb/make/valgrind + clangd (LSP) · Python: python/pip/flask +
-# pyright (LSP) · SQL: sqlite · git para los repos de los alumnos.
+# pyright (LSP) · Java: jdk-openjdk (javac/java; lsp-java baja el propio
+# Eclipse JDT Language Server) · SQL: sqlite · git para los repos de los
+# alumnos.
 pacman_needed emacs gcc gdb make valgrind clang python python-pip \
-              python-pipx python-flask pyright sqlite git
+              python-pipx python-flask pyright jdk-openjdk sqlite git
 # COBOL: GnuCOBOL (cobc) vive solo en AUR; compila a C y linkea con el gcc
 # de arriba. F5 corre .cob/.cbl con  cobc -x archivo.cob && ./archivo.
 aur_needed gnucobol && ok "GnuCOBOL presente: $(cobc --version 2>/dev/null | head -1)" \
@@ -156,7 +158,7 @@ cat > "$EMACS50_DIR/init.el" << 'EMACS50_INIT'
 ;; Version: 1.0
 ;;
 ;; emacs50: sucesor unificado de emacs-crisol y emacs-crustgo.
-;; Cubre el curso CS50x completo — C, Python (+Flask), SQL, HTML/CSS/JS —
+;; Cubre el curso CS50x completo — C, Java, Python (+Flask), SQL, HTML/CSS/JS —
 ;; más C++/Rust/Go y flasheo de ESP32. Tema dark + números de línea,
 ;; lsp-mode y debug con gdb/dap. Sin org-mode, sin IA, sin adornos.
 ;;
@@ -271,6 +273,7 @@ cat > "$EMACS50_DIR/init.el" << 'EMACS50_INIT'
   :commands (lsp lsp-deferred)
   :hook ((c-mode    . lsp-deferred)
          (c++-mode  . lsp-deferred)
+         (java-mode . lsp-deferred)
          (rust-mode . lsp-deferred)
          (go-mode   . lsp-deferred)
          ;; organizar imports de Go al guardar (gopls)
@@ -293,6 +296,15 @@ cat > "$EMACS50_DIR/init.el" << 'EMACS50_INIT'
   :hook (python-mode . (lambda ()
                          (require 'lsp-pyright)
                          (lsp-deferred))))
+
+;; Java → eclipse.jdt.ls (lsp-java lo baja solo, requiere el jdk-openjdk
+;; instalado arriba). Sin project (pom.xml/build.gradle) igual sirve LSP
+;; sobre un .java suelto — jdtls arma un "workspace" implícito.
+(use-package lsp-java
+  :after lsp-mode
+  :hook (java-mode . (lambda ()
+                       (require 'lsp-java)
+                       (lsp-deferred))))
 
 (use-package lsp-ui
   :commands lsp-ui-mode
@@ -398,9 +410,9 @@ cat > "$EMACS50_DIR/init.el" << 'EMACS50_INIT'
 
 (defun emacs50-compile ()
   "F5: guarda y compila/corre. Detecta el proyecto (Makefile, Cargo.toml,
-go.mod) y, si no hay, actúa según el archivo: C → gcc, C++ → g++,
-Python → python (app.py → flask run), Rust → rustc, Go → go run,
-COBOL → cobc, HTML → abrir en el navegador."
+go.mod, pom.xml, build.gradle) y, si no hay, actúa según el archivo:
+C → gcc, C++ → g++, Java → javac+java, Python → python (app.py → flask
+run), Rust → rustc, Go → go run, COBOL → cobc, HTML → abrir en el navegador."
   (interactive)
   (save-buffer)
   (let* ((file  buffer-file-name)
@@ -453,6 +465,19 @@ COBOL → cobc, HTML → abrir en el navegador."
         (setq dir default-directory
               cmd (format "g++ -std=c++17 -Wall -Wextra -g %s -o %s && ./%s"
                           (shell-quote-argument name) base base))))
+     ;; ── Java ────────────────────────────────────────────────
+     ;; sin proyecto Maven/Gradle: compila y corre el archivo suelto (la
+     ;; clase pública debe llamarse igual que el archivo, como pide javac).
+     ((string= ext "java")
+      (let ((pom    (locate-dominating-file default-directory "pom.xml"))
+            (gradle (or (locate-dominating-file default-directory "build.gradle")
+                        (locate-dominating-file default-directory "build.gradle.kts"))))
+        (cond
+         (pom    (setq dir pom cmd "mvn -q compile exec:java"))
+         (gradle (setq dir gradle cmd "gradle run"))
+         (t (setq dir default-directory
+                  cmd (format "javac %s && java %s"
+                              (shell-quote-argument name) base))))))
      ;; ── COBOL ───────────────────────────────────────────────
      ((member ext '("cob" "cbl"))
       (if make
@@ -748,7 +773,7 @@ fi
 echo
 msg "Verificación:"
 check() { if have "$1"; then printf '    ✓ %s\n' "$1"; else printf '    ✗ %s  (FALTA)\n' "$1"; fi; }
-for b in emacs gcc gdb make valgrind clangd cobc python pyright sqlite3 flask check50 style50 submit50; do check "$b"; done
+for b in emacs gcc gdb make valgrind clangd cobc python pyright java javac sqlite3 flask check50 style50 submit50; do check "$b"; done
 if [ "$WITH_SISTEMAS" -eq 1 ]; then
     for b in rustc cargo rust-analyzer go gopls dlv; do check "$b"; done
 fi

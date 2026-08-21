@@ -15,7 +15,7 @@
 + ESP32).
 
 Un Emacs **mínimo para todo el curso [CS50x](https://cs50.harvard.edu/x/)**
-— C, Python (+Flask), SQL, HTML/CSS/JS — **más ESP32** (y C++/Rust/Go).
+— C, Java, Python (+Flask), SQL, HTML/CSS/JS — **más ESP32** (y C++/Rust/Go).
 `lsp-mode`, debug con `gdb`/`dap`, y el **look del VS Code de CS50**:
 tema GitHub Dark (VS Code) con fondo negro puro, pestañas de editor
 (tab-line), árbol de archivos a la izquierda (treemacs) y terminal abajo
@@ -72,6 +72,9 @@ emacs50 hello.c    # abre directamente un archivo
 | `Makefile` (C/C++)           | `make`                                       |
 | `.c` suelto                  | `gcc -Wall -Wextra -g … && ./bin`            |
 | `.cpp` suelto                | `g++ -std=c++17 -Wall -Wextra -g … && ./bin` |
+| `pom.xml` (`.java`)          | `mvn -q compile exec:java`                   |
+| `build.gradle` (`.java`)     | `gradle run`                                 |
+| `.java` suelto               | `javac archivo.java && java Clase`           |
 | `app.py`                     | `flask run` (semana 9 de CS50)               |
 | `.py` suelto                 | `python archivo.py`                          |
 | `.html`                      | lo abre en el navegador                      |
@@ -81,7 +84,7 @@ emacs50 hello.c    # abre directamente un archivo
 
 ### LSP por lenguaje
 
-C/C++ → `clangd` · Python → `pyright` · Rust → `rust-analyzer` · Go → `gopls`
+C/C++ → `clangd` · Java → `eclipse.jdt.ls` (vía `lsp-java`) · Python → `pyright` · Rust → `rust-analyzer` · Go → `gopls`
 
 ### Debug y registros
 
